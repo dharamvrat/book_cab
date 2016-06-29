@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>Cabs</title>
+        <meta charset="windows-1252">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="cabstyle.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+    </head>
+    <body>
+        <div id="request" class="outer">
+            <div>Enter Source x(-180 to 180):</div>
+            <input type="number" id="txtSrcX" min="-180" max="180">
+            <div>Enter Source y(-90 to 90):</div>
+            <input type="number" id="txtSrcY" min="-90" max="90">
+            <div>Enter Dest x(-180 to 180):</div>
+            <input type="number" id="txtDestX" min="0" max="99">
+            <div>Enter Dest y(-90 to 90):</div>
+            <input type="number" id="txtDestY" min="0" max="99">
+            <button id="btnBookNormal">Normal</button>
+            <button id="btnBookPink">Pink</button>
+        </div>
+        <div id="booked" class="outer">
+            <div id="cabInfo"><label id="cabId"></label></div>
+            <button id="btnStartTrip" class="btn">Start Trip</button>
+            <button id="btnEndTrip" class="btn" disabled>End Trip</button>
+        </div>
+        <script src="cabrenderer.js"></script>
+    </body>
+</html>

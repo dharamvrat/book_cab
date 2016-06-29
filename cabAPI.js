@@ -1,78 +1,120 @@
 var express = require('express');
 var app = express();
+var normalCab = [];
+var pinkCab = [];
+var bookedCab = [];
 
-var datetime = require('node-datetime');
-  
-var Cab = function (name, lng, lat, idle, pink) {
-    this._name = name;
-	this._lng = lng;
-	this._lat = lat;
-	this._idle = idle;
-	this._pink = pink;
-	this._tripStart = datetime.create();
+var Cab = function (id, lng, lat, pink) {
+    this._id = id;
+    this._lng = lng;
+    this._lat = lat;
+    this._idle = true;
+    this._pink = pink;
+    this._tripStart = new Date();
+    if (pink)
+        pinkCab.push(this);
+    else
+        normalCab.push(this);
 };
 
-Cab.prototype.bookCab = function () {
+Cab.prototype.bookCab = function (List, i) {
     this._idle = false;
-	this._tripStart = datetime.create();
+    this._tripStart = new Date();
+    List.splice(i, 1);
+    bookedCab.push(this);
 };
 
-Cab.prototype.changePos = function (lng, lat) {
-	this.lng = lng;
-	this.lat = lat;
-};
+//Cab.prototype.changePos = function (lng, lat) {
+//    this.lng = lng;
+//    this.lat = lat;
+//};
+//
+//Cab.prototype.releaseCab = function (end, List) {
+//    this._idle = true;
+//    this.changePos(end.LNG, end.LAT);
+//    var index = List.indexOf(this);
+//    List.splice(index, 1);
+//    List.unshift(this);
+//};
 
-Cab.prototype.releaseCab = function (end) {
-	this._idle = true;
-	this.changePos(end.lng, end.lat);
-};
 
 
+new Cab('Cab1', 0, 7, true);
+new Cab('Cab2', 2, 11, true);
+new Cab('Cab3', 3, 10, false);
+new Cab('Cab4', 4, 9, false);
+new Cab('Cab5', 5, 8, false);
+new Cab('Cab6', 6, 7, false);
 
-var cab1 = new Cab('Cab1', 1, 5, true, false);
-var cab2 = new Cab('Cab2', 2, 7, true, true);
-
-app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
+app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
 });
 
-var getDist = function(lng, lat, cab) {
-  return Math.sqrt(Math.pow((lng - cab.lng), 2) + Math.pow((lat - cab.lat), 2));
+var getDist = function (lng, lat, lngD, latD) {
+    return Math.sqrt(Math.pow((parseInt(lng) - lngD), 2) + Math.pow((parseInt(lat) - latD), 2));
 };
 
-app.get('/book', function(req, res) {
-    var start = req.query.Source;
-	//console.log(lng+lat);
-	var dist = -1, asgnCab, pink = start.pink;
-	for (var cabs in Cab) {
-		if(cabs.idle || (!pink || (pink == cabs._pink))) {
-			var tempDist = getDist(start.lng, start.lat, cabs);
-			if(tempDist<dist || dist == -1) {
-				dist = tempdist;
-				asgnCab = cabs;
-			}
-		}
-	}
-	if(asgnCab) {
-		asgnCab.bookCab();
-		res.send(asgnCab);
-	}
-	else {
-		res.send("Error:404")
-	}
+app.get('/book', function (req, res) {
+    var start = req.query, data = {};
+    //console.log(lng+lat);
+    var dist = -1, index = -1, List;
+    if (start.Pink === "true")
+        List = pinkCab;
+    else
+        List = normalCab;
+    for (var i in List) {
+        var tempDist = getDist(start.srcX, start.srcY, List[i]._lng, List[i]._lat);
+        if (tempDist < dist || dist === -1) {
+            dist = tempDist;
+            index = i;
+        }
+    }
+    if (index !== -1) {
+        data.booked = true;
+        data.id = List[index]._id;
+        data.dist = dist.toFixed(2);
+        List[index].bookCab(List, index);
+
+    } else {
+        data.booked = false;
+    }
+    res.send(data);
 });
 
-app.get('/endTrip', function(req, res) {
-    var start = req.query.Source,
-	end = req.query.Dest,
-	asgnCab = req.query.asgnCab;
-	var timeTaken = (datetime.create()).now() - asgnCab._tripStart.now();
-	var fare = ((getDist(start.lng, start.lat, end))*2) + (timeTaken/60000);
-	if(asgnCab._pink)
-		fare += 5;
-	asgnCab.releaseCab();
-	console.log("fare= "+fare);
-	res.send("fare:"+fare);
+app.get('/endTrip', function (req, res) {
+    var data = req.query,
+            srcX = data.srcX,
+            srcY = data.srcY,
+            destX = data.destX,
+            destY = data.destY,
+            cabId = data.cab,
+            start = new Date(data.start),
+            resp = {};
+    for (var i in bookedCab) {
+        if (bookedCab[i]._id === cabId) {
+            var cab = bookedCab[i],
+                    pink = (cab._pink === true),
+                    timeTaken = (((new Date()).getTime() - start.getTime()) / 60000),
+                    dist = getDist(srcX, srcY, destX, destY),
+                    fare = (dist * 2) + timeTaken;
+            if (pink) {
+                fare += 5;
+            } 
+            new Cab(cabId, destX, destY, pink);
+            resp.fare = fare;
+            resp.distance = dist;
+            resp.time = timeTaken;
+
+            bookedCab.splice(i, 1);
+            console.log(pinkCab.length);
+            console.log(normalCab.length);
+            console.log(bookedCab.length);
+            break;
+        }
+    }
+    res.send(resp);
 });
+
+app.listen(3000);
