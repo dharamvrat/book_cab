@@ -24,20 +24,6 @@ Cab.prototype.bookCab = function (List, i) {
     bookedCab.push(this);
 };
 
-//Cab.prototype.changePos = function (lng, lat) {
-//    this.lng = lng;
-//    this.lat = lat;
-//};
-//
-//Cab.prototype.releaseCab = function (end, List) {
-//    this._idle = true;
-//    this.changePos(end.LNG, end.LAT);
-//    var index = List.indexOf(this);
-//    List.splice(index, 1);
-//    List.unshift(this);
-//};
-
-
 
 new Cab('Cab1', 0, 7, true);
 new Cab('Cab2', 2, 11, true);
